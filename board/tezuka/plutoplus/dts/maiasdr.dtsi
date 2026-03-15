@@ -16,6 +16,18 @@
                 interrupt-parent = <&intc>;
                 interrupts = <0 55 IRQ_TYPE_LEVEL_HIGH>;
         };
+
+        pdw_rx: pdw-rx@43c10000 {
+                compatible = "uio_pdrv_genirq";
+                reg = <0x43c10000 0x1000>;
+                reg-names = "pdw-rx-csr";
+        };
+
+        pdw_tx: pdw-tx@43c11000 {
+                compatible = "uio_pdrv_genirq";
+                reg = <0x43c11000 0x1000>;
+                reg-names = "pdw-tx-csr";
+        };
 };
 
 / {
