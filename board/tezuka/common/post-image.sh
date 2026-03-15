@@ -27,7 +27,13 @@ mv $BIN_DIR/pluto.itb $BIN_DIR/pluto.dfu
 
 echo "generating the boot.img"
 cp $BOARD_DIR/bitstream/fsbl.elf $BIN_DIR
-cp $BIN_DIR/u-boot $BIN_DIR/u-boot.elf
+# Use pre-built U-Boot if available (buildroot-compiled one is broken for plutoplus)
+if [ -f "$BOARD_DIR/bitstream/u-boot.elf" ]; then
+	echo "using pre-built u-boot.elf from $BOARD_DIR/bitstream/"
+	cp $BOARD_DIR/bitstream/u-boot.elf $BIN_DIR/u-boot.elf
+else
+	cp $BIN_DIR/u-boot $BIN_DIR/u-boot.elf
+fi
 echo "img : {[bootloader] $BIN_DIR/fsbl.elf $BIN_DIR/u-boot.elf}" > $BIN_DIR/boot.bif
 bootgen -image $BIN_DIR/boot.bif -w -o i $BIN_DIR/boot.img
 
@@ -45,26 +51,28 @@ cp $BIN_DIR/uboot-env.bin $BIN_DIR/uboot-env.bin.tmp
 $dfu_suffix -a $BIN_DIR/uboot-env.bin.tmp -v $DEVICE_VID -p $DEVICE_PID
 mv $BIN_DIR/uboot-env.bin.tmp $BIN_DIR/uboot-env.dfu
 
-echo "generatind sd"
+echo "generating sd"
 SDIMGDIR=$BIN_DIR/sdimg
 mkdir -p $SDIMGDIR
+
+# SD BOOT.bin: FSBL + bitstream + U-Boot
 echo "img : {[bootloader] $BIN_DIR/fsbl.elf $BIN_DIR/system_top.bit $BIN_DIR/u-boot.elf}" > $SDIMGDIR/boot.bif
 bootgen -image $SDIMGDIR/boot.bif -w -o i $SDIMGDIR/BOOT.bin
+
+# Convert bitstream to .bin format for U-Boot fpga load command
+echo "all: { $BIN_DIR/system_top.bit }" > $SDIMGDIR/bit.bif
+bootgen -image $SDIMGDIR/bit.bif -arch zynq -process_bitstream bin -w -o $SDIMGDIR/system_top.bit.bin
 
 if [ -e $BOARD_DIR/bitstream/overclock/ ]; then
     mkdir -p $SDIMGDIR/overclock
     for filename in $BOARD_DIR/bitstream/overclock/*.elf ; do
-        echo "img : {[bootloader] $filename $BIN_DIR/system_top.bit $BIN_DIR/u-boot.elf}" > $SDIMGDIR/boot.bif    
+        echo "img : {[bootloader] $filename $BIN_DIR/u-boot.elf}" > $SDIMGDIR/boot.bif
         NAME=`basename -- "$filename" .elf`
         bootgen -image $SDIMGDIR/boot.bif -w -o i $SDIMGDIR/overclock/"BOOT_"$NAME
     done
 fi
 
-# SYSTEM TOP.BIN when need to launch from USB or SD without BOOT.BIN
-#echo "img : {$SDIMGDIR/system_top.bit }" >  $SDIMGDIR/system.bif
-#bootgen -image $SDIMGDIR/system.bif -process_bitstream bin -arch zynq -w -o i $SDIMGDIR/system_top.bin
-
-rm $SDIMGDIR/boot.bif
+rm $SDIMGDIR/boot.bif $SDIMGDIR/bit.bif
 mkimage -A arm -T ramdisk -C gzip -d $BIN_DIR/rootfs.cpio.gz $SDIMGDIR/uramdisk.image.gz
 mkimage -A arm -O linux -T kernel -C none -a 0x2080000 -e 2080000 -n "Linux kernel" -d $BIN_DIR/zImage $SDIMGDIR/uImage
 cp $BIN_DIR/$DTB_NAME $SDIMGDIR/devicetree.dtb
