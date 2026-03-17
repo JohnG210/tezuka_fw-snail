@@ -12,7 +12,9 @@ PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_INSTALL_IMAGES = YES
 PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_INSTALL_TARGET = NO
 
 define PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_INSTALL_IMAGES_CMDS
-	$(UNZIP) -o $(@D)/$(PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_SOURCE) system_top.bit -d $(@D)
+	$(UNZIP) -o $(@D)/$(PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_SOURCE) system_top.bit -d $(@D) 2>/dev/null || \
+	( $(UNZIP) -o $(@D)/$(PLUTOPLUSMAIA_IIO_SYSTEM_TOP_BIT_SOURCE) system_top_bad_timing.bit -d $(@D) && \
+	  mv $(@D)/system_top_bad_timing.bit $(@D)/system_top.bit )
 	cp -f $(@D)/system_top.bit $(BINARIES_DIR)
 endef
 
