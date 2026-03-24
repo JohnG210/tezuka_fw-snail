@@ -47,6 +47,18 @@
                         reg = <0x6000000 0x8000000>;
                         label = "maia_sdr_recording";
                 };
+
+                pdw_iq_capture: pdw_iq_capture@10000000 {
+                        no-map;
+                        reg = <0x10000000 0x8000000>;
+                        label = "pdw_iq_capture";
+                };
+
+                pdw_dma_capture: pdw_dma_capture@18000000 {
+                        no-map;
+                        reg = <0x18000000 0x400000>;
+                        label = "pdw_dma_capture";
+                };
         };
 
         maia-sdr-recording {
@@ -58,5 +70,15 @@
                 compatible = "maia-sdr,rxbuffer";
                 memory-region = <&maia_sdr_spectrometer>;
                 buffer-size = <0x8000>;
+        };
+
+        maia-sdr-iq-capture {
+                compatible = "maia-sdr,recording";
+                memory-region = <&pdw_iq_capture>;
+        };
+
+        maia-sdr-pdw-capture {
+                compatible = "maia-sdr,recording";
+                memory-region = <&pdw_dma_capture>;
         };
 };

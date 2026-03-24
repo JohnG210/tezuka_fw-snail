@@ -19,7 +19,9 @@ sed -i s/##DEVICE_FW##/${FW_VERSION}/g ${BINARIES_DIR}/msd/LICENSE.html
 sed -i s/##LINUX_VERSION##/${LINUX_VERS}/g ${BINARIES_DIR}/msd/LICENSE.html
 sed -i s/##UBOOT_VERSION##/${UBOOT_VERS}/g ${BINARIES_DIR}/msd/LICENSE.html
 
+HDL_VERSION=$(python3 -c "import re, sys; m=re.search(r\"_version\s*=\s*'([^']+)'\", open(sys.argv[1]).read()); print(m.group(1) if m else 'unknown')" "${BOARD_DIR}/../../../../maia-sdr/maia-hdl/maia_hdl/maia_sdr.py")
 echo device-fw tezuka-${FW_VERSION}> ${TARGET_DIR}/opt/VERSIONS
+echo hdl-version ${HDL_VERSION}>> ${TARGET_DIR}/opt/VERSIONS
 
 GENIMAGE_CFG="${BOARD_DIR}/genimage-msd.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
