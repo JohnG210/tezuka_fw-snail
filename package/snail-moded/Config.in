@@ -1,0 +1,8 @@
+config BR2_PACKAGE_SNAIL_MODED
+	bool "snail-moded"
+	depends on BR2_PACKAGE_HOST_RUSTC_TARGET_ARCH_SUPPORTS
+	select BR2_PACKAGE_HOST_RUSTC
+	help
+	  DiSCO-SNAIL mode manager REST API daemon.
+	  Provides HTTP endpoints for switching between
+	  EW, Sig Int, and Standby firmware modes.

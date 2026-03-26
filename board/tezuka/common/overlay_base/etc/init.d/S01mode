@@ -1,0 +1,62 @@
+#!/bin/sh
+# S01mode — Runtime mode check for DiSCO-SNAIL multi-mode firmware
+#
+# Reads /mnt/sd/mode.conf and disables services not needed for the current mode.
+# Runs very early (S01) before any mode-specific services start.
+#
+# Modes:
+#   ew      — All services enabled (EW Engine)
+#   sigint  — All services enabled (Sig Int / spectrum analysis)
+#   standby — Minimal: SSH + network only, heavy services disabled
+#
+# Service disabling works by chmod -x on init scripts in the ramdisk.
+# Since rootfs is in RAM, this only affects the current boot — clean on next boot.
+
+STANDBY_SERVICES="
+S50maia-kmod
+S60maia-httpd
+S50mosquitto
+S50maia-sdr-certs
+S98autostart
+"
+# Note: S50avahi-daemon is NOT disabled — avahi-autoipd handles DHCP retry
+
+case "$1" in
+start)
+    # --- Read mode from SD card ---
+    MODE="ew"
+    if [ -f /mnt/sd/mode.conf ]; then
+        MODE=$(cat /mnt/sd/mode.conf | tr -d '[:space:]')
+    elif [ -b /dev/mmcblk0p1 ]; then
+        mount /dev/mmcblk0p1 /mnt/sd 2>/dev/null
+        if [ -f /mnt/sd/mode.conf ]; then
+            MODE=$(cat /mnt/sd/mode.conf | tr -d '[:space:]')
+        fi
+        umount /mnt/sd 2>/dev/null || true
+    fi
+
+    echo "DiSCO-SNAIL mode: $MODE"
+
+    # --- Update motd ---
+    case "$MODE" in
+        ew)       MODE_LABEL="EW Engine" ;;
+        sigint)   MODE_LABEL="Sig Int" ;;
+        standby)  MODE_LABEL="Standby" ;;
+        *)        MODE_LABEL="$MODE" ;;
+    esac
+    if [ -f /etc/motd ]; then
+        sed -i "s/EW Engine\|Sig Int\|Standby/$MODE_LABEL/" /etc/motd
+    fi
+
+    # --- Disable services in standby mode ---
+    if [ "$MODE" = "standby" ]; then
+        echo "Standby mode: disabling heavy services..."
+        for svc in $STANDBY_SERVICES; do
+            if [ -x "/etc/init.d/$svc" ]; then
+                chmod -x "/etc/init.d/$svc"
+                echo "  Disabled $svc"
+            fi
+        done
+    fi
+    ;;
+esac

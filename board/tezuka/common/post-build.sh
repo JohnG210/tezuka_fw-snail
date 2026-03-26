@@ -23,6 +23,21 @@ HDL_VERSION=$(python3 -c "import re, sys; m=re.search(r\"_version\s*=\s*'([^']+)
 echo device-fw tezuka-${FW_VERSION}> ${TARGET_DIR}/opt/VERSIONS
 echo hdl-version ${HDL_VERSION}>> ${TARGET_DIR}/opt/VERSIONS
 
+# Substitute motd placeholders with build info
+# BUILD_MODE comes from the build environment (ew, sigint, standby)
+BUILD_MODE=${BUILD_MODE:-ew}
+case "${BUILD_MODE}" in
+	ew)      MODE_LABEL="EW Engine" ;;
+	sigint)  MODE_LABEL="Sig Int" ;;
+	standby) MODE_LABEL="Standby" ;;
+	*)       MODE_LABEL="${BUILD_MODE}" ;;
+esac
+if [ -f ${TARGET_DIR}/etc/motd ]; then
+	sed -i "s/#BUILD#/${FW_VERSION}/g" ${TARGET_DIR}/etc/motd
+	sed -i "s/#HDL#/${HDL_VERSION}/g" ${TARGET_DIR}/etc/motd
+	sed -i "s/#MODE#/${MODE_LABEL}/g" ${TARGET_DIR}/etc/motd
+fi
+
 GENIMAGE_CFG="${BOARD_DIR}/genimage-msd.cfg"
 GENIMAGE_TMP="${BUILD_DIR}/genimage.tmp"
 

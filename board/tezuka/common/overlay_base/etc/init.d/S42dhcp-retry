@@ -1,0 +1,21 @@
+#!/bin/sh
+# S42dhcp-retry — Background DHCP retry for eth0
+#
+# The initial udhcpc during S40network often fails because the ethernet
+# PHY link negotiation isn't complete yet. This script retries in the
+# background after a delay.
+
+case "$1" in
+start)
+    (
+        sleep 10
+        if ! ifconfig eth0 2>/dev/null | grep -q "inet addr"; then
+            udhcpc -i eth0 -n -q 2>/dev/null
+        fi
+        sleep 15
+        if ! ifconfig eth0 2>/dev/null | grep -q "inet addr"; then
+            udhcpc -i eth0 -n -q 2>/dev/null
+        fi
+    ) &
+    ;;
+esac

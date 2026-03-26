@@ -1,0 +1,30 @@
+#!/bin/sh
+# S02snail-moded — Start DiSCO-SNAIL mode manager daemon
+# Runs in ALL modes (including standby) for remote mode management.
+
+DAEMON=/usr/bin/snail-moded
+PIDFILE=/var/run/snail-moded.pid
+
+case "$1" in
+start)
+    [ -x "$DAEMON" ] || exit 0
+    echo -n "Starting snail-moded: "
+    start-stop-daemon -S -b -q -m -p $PIDFILE -x $DAEMON -- --port 8080
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+    ;;
+stop)
+    echo -n "Stopping snail-moded: "
+    start-stop-daemon -K -q -p $PIDFILE 2>/dev/null
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+    rm -f $PIDFILE
+    ;;
+restart|reload)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+*)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
