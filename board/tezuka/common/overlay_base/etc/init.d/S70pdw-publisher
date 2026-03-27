@@ -1,0 +1,36 @@
+#!/bin/sh
+# S70pdw-publisher — Start ZMQ PDW publisher daemon (EW mode only)
+#
+# Disabled in standby/sigint modes by S01mode.
+# Starts after maia-kmod (S50) loads UIO devices.
+#
+# Default: PDW topic only (-t pdw). For PDW+IQ, restart with -t all:
+#   /etc/init.d/S70pdw-publisher stop
+#   pdw-publisher -t all -d
+
+DAEMON=/usr/bin/pdw-publisher
+PIDFILE=/var/run/pdw-publisher.pid
+
+case "$1" in
+start)
+    [ -x "$DAEMON" ] || exit 0
+    echo -n "Starting pdw-publisher: "
+    start-stop-daemon -S -b -q -m -p $PIDFILE -x $DAEMON -- -t pdw -d
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+    ;;
+stop)
+    echo -n "Stopping pdw-publisher: "
+    start-stop-daemon -K -q -p $PIDFILE 2>/dev/null
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+    rm -f $PIDFILE
+    ;;
+restart|reload)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+*)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac

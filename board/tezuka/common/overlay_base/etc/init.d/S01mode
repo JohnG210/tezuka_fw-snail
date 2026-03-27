@@ -17,6 +17,7 @@ S50maia-kmod
 S60maia-httpd
 S50mosquitto
 S50maia-sdr-certs
+S70pdw-publisher
 S98autostart
 "
 # Note: S50avahi-daemon is NOT disabled — avahi-autoipd handles DHCP retry

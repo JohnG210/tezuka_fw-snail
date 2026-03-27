@@ -1,0 +1,9 @@
+config BR2_PACKAGE_PDW_ZMQ
+	bool "pdw-zmq"
+	select BR2_PACKAGE_ZEROMQ
+	help
+	  ZMQ publisher daemon for PDW and IQ streaming from EW engine.
+	  Publishes PDW records and optionally gated IQ data over ZMQ PUB
+	  socket for real-time consumption by host applications.
+
+	  Also installs uio_reg and dma_read helper binaries.
