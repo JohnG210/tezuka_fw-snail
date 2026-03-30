@@ -1,0 +1,1 @@
+export SCREENDIR=/tmp/screen
