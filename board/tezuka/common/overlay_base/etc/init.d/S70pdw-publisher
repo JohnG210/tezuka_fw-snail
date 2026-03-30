@@ -6,23 +6,34 @@
 #
 # Default: PDW topic only (-t pdw). For PDW+IQ, restart with -t all:
 #   /etc/init.d/S70pdw-publisher stop
-#   pdw-publisher -t all -d
+#   screen -S pdw -dm /usr/bin/pdw-publisher -t all -v
+#
+# Attach to see live logs:  screen -r pdw
 
 DAEMON=/usr/bin/pdw-publisher
-PIDFILE=/var/run/pdw-publisher.pid
+SCREEN_NAME=pdw
+export SCREENDIR=/tmp/screen
+export HOME=/root
 
 case "$1" in
 start)
     [ -x "$DAEMON" ] || exit 0
-    echo -n "Starting pdw-publisher: "
-    start-stop-daemon -S -b -q -m -p $PIDFILE -x $DAEMON -- -t pdw -d
+    # Only start if UIO1 device node exists (EW engine in DTB)
+    if [ ! -e /dev/uio1 ]; then
+        echo "pdw-publisher: no /dev/uio1, skipping"
+        exit 0
+    fi
+    mkdir -p "$SCREENDIR"
+    chmod 700 "$SCREENDIR"
+    echo -n "Starting pdw-publisher (screen '$SCREEN_NAME'): "
+    screen -S $SCREEN_NAME -dm $DAEMON -t pdw -v
     [ $? = 0 ] && echo "OK" || echo "FAIL"
     ;;
 stop)
     echo -n "Stopping pdw-publisher: "
-    start-stop-daemon -K -q -p $PIDFILE 2>/dev/null
+    screen -S $SCREEN_NAME -X quit 2>/dev/null
+    killall pdw-publisher 2>/dev/null
     [ $? = 0 ] && echo "OK" || echo "FAIL"
-    rm -f $PIDFILE
     ;;
 restart|reload)
     $0 stop

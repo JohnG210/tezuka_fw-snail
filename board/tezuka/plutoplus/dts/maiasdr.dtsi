@@ -1,5 +1,5 @@
 /*
- * ZYNQ Pluto SDR (Z7010/AD9363) - Maia SDR
+ * ZYNQ Pluto SDR (Z7010/AD9363) - Maia SDR (EW Mode)
  *
  * Copyright (C) 2022 Daniel Estevez <daniel@destevez.net>
  *
@@ -17,15 +17,15 @@
                 interrupts = <0 55 IRQ_TYPE_LEVEL_HIGH>;
         };
 
-        ew_rx: ew-rx@43c10000 {
+        ew_rx: ew-rx@7c480000 {
                 compatible = "uio_pdrv_genirq";
-                reg = <0x43c10000 0x1000>;
+                reg = <0x7c480000 0x1000>;
                 reg-names = "ew-rx-csr";
         };
 
-        ew_tx: ew-tx@43c11000 {
+        ew_tx: ew-tx@7c490000 {
                 compatible = "uio_pdrv_genirq";
-                reg = <0x43c11000 0x1000>;
+                reg = <0x7c490000 0x1000>;
                 reg-names = "ew-tx-csr";
         };
 };
@@ -36,40 +36,17 @@
                 #size-cells = <1>;
                 ranges;
 
-                maia_sdr_spectrometer: maia_sdr_spectrometer@16000000 {
-                        no-map;
-                        reg = <0x16000000 0x40000>;
-                        label = "maia_sdr_spectrometer";
-                };
-
-                maia_sdr_recording: maia_sdr_recording@6000000 {
-                        no-map;
-                        reg = <0x6000000 0x8000000>;
-                        label = "maia_sdr_recording";
-                };
-
                 ew_iq_capture: ew_iq_capture@10000000 {
                         no-map;
-                        reg = <0x10000000 0x8000000>;
+                        reg = <0x10000000 0x4000000>;
                         label = "ew_iq_capture";
                 };
 
-                ew_dma_capture: ew_dma_capture@18000000 {
+                ew_dma_capture: ew_dma_capture@14000000 {
                         no-map;
-                        reg = <0x18000000 0x400000>;
+                        reg = <0x14000000 0x400000>;
                         label = "ew_dma_capture";
                 };
-        };
-
-        maia-sdr-recording {
-                compatible = "maia-sdr,recording";
-                memory-region = <&maia_sdr_recording>;
-        };
-
-        maia-sdr-spectrometer {
-                compatible = "maia-sdr,rxbuffer";
-                memory-region = <&maia_sdr_spectrometer>;
-                buffer-size = <0x8000>;
         };
 
         maia-sdr-iq-capture {

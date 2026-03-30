@@ -1,0 +1,43 @@
+#!/bin/sh
+# S55sdr-reset — Clear sdr_reset before EW register access
+#
+# The sync domain defaults to reset (sdr_reset=1 at control+0x08 bit 0).
+# EW CSR registers cross to sync via CDC — if sync is in reset, any
+# AXI read to 0x7C480000/0x7C490000 hangs the bus permanently.
+# Must clear sdr_reset BEFORE maia-httpd (S60) or pdw-publisher (S70).
+
+case "$1" in
+start)
+    if [ -e /dev/uio0 ]; then
+        echo -n "Clearing sdr_reset: "
+        devmem 0x7C460008 32 0x0 >/dev/null 2>&1
+        if [ $? = 0 ]; then
+            # Wait for sync domain to come out of reset
+            # FFSynchronizer needs a few clock cycles, but CDC
+            # PulseSynchronizer needs both domains to settle
+            sleep 1
+            # Verify by reading an EW register (if UIO1 exists)
+            if [ -e /dev/uio1 ]; then
+                VAL=$(devmem 0x7C480000 2>/dev/null)
+                if [ $? = 0 ]; then
+                    echo "OK (EW RX=$VAL)"
+                else
+                    echo "FAIL (EW read hung)"
+                    chmod -x /etc/init.d/S70pdw-publisher 2>/dev/null
+                fi
+            else
+                echo "OK (no uio1)"
+            fi
+        else
+            echo "FAIL (devmem)"
+            chmod -x /etc/init.d/S70pdw-publisher 2>/dev/null
+        fi
+    fi
+    ;;
+stop|restart|reload)
+    ;;
+*)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+    ;;
+esac
